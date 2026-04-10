@@ -151,18 +151,14 @@ export async function POST(req: Request) {
     response.headers.set("X-Session-Remaining", String(sessionDeduction!.remaining));
     return response;
   } catch (err: any) {
-    // Sanitize technical errors — never expose raw internals to the client
+    // Only true system errors reach here (network failures, misconfiguration, etc.)
+    // Contract-level findings (HostError, Panic, etc.) are handled by the analyzer
+    // and returned as valid report issues — they never throw.
     const rawMsg = err.message || String(err);
-    const TECHNICAL_PATTERNS = [
-      /HostError/i, /Panic/i, /Error\(Contract/i, /balance\s+not\s+in\s+range/i,
-      /runtime\s+error/i, /wasm\s+trap/i, /out\s+of\s+bounds/i,
-    ];
-    const isTechnical = TECHNICAL_PATTERNS.some((p) => p.test(rawMsg));
-    const safeMessage = isTechnical
-      ? "Simulation identified a critical runtime logic failure in the submitted contract"
-      : `Internal server error: ${rawMsg}`;
-
-    console.error("[scan] Error:", rawMsg);
-    return NextResponse.json({ error: safeMessage }, { status: 500 });
+    console.error("[scan] System error:", rawMsg);
+    return NextResponse.json(
+      { error: "An internal error occurred while processing your scan. Please try again." },
+      { status: 500 }
+    );
   }
 }

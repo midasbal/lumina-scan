@@ -746,9 +746,30 @@ export default function Home() {
     } catch (err: any) {
       const msg = err?.message ?? String(err);
       console.error("[startSession] Error:", msg);
-      toast.error("Pro upgrade failed", {
-        description: "An unexpected error occurred. Please try again.",
-      });
+
+      // Parse specific Stellar / wallet error causes
+      const lower = msg.toLowerCase();
+      if (/cancel|reject|denied|dismiss/i.test(msg)) {
+        toast.error("Transaction cancelled", {
+          description: "You cancelled the Pro upgrade transaction.",
+        });
+      } else if (/op_underfunded|insufficient.*balance|tx_insufficient_balance|not enough/i.test(msg)) {
+        toast.error("Insufficient USDC balance in wallet", {
+          description: "Your Stellar wallet does not have enough USDC to cover the 5 USDC Pro deposit. Please top up and try again.",
+        });
+      } else if (/timeout|timed?\s*out/i.test(lower)) {
+        toast.error("Transaction timed out", {
+          description: "The Stellar network did not confirm in time. Please try again.",
+        });
+      } else if (/network|fetch|connect/i.test(lower)) {
+        toast.error("Network error", {
+          description: "Could not reach the Stellar network. Check your connection and try again.",
+        });
+      } else {
+        toast.error("Pro upgrade failed", {
+          description: msg.length > 120 ? msg.slice(0, 120) + "…" : msg,
+        });
+      }
     } finally {
       setSessionLoading(false);
     }
@@ -866,22 +887,27 @@ export default function Home() {
       const rawMessage =
         err?.message || err?.toString?.() || "An unexpected error occurred";
 
-      // Sanitize technical errors — never show raw crash data to the user
-      const TECHNICAL_PATTERNS = [
-        /HostError/i, /Panic/i, /Error\(Contract/i, /balance\s+not\s+in\s+range/i,
-        /runtime\s+error/i, /wasm\s+trap/i, /out\s+of\s+bounds/i,
-      ];
-      const isTechnical = TECHNICAL_PATTERNS.some((p) => p.test(rawMessage));
-      const message = isTechnical
-        ? "Simulation identified a logical failure in the submitted contract"
-        : rawMessage;
-
       console.error("[handleScan] Error details:", {
         message: rawMessage,
         name: err?.name,
         stack: err?.stack,
         raw: err,
       });
+
+      // Provide specific feedback based on error type
+      let message: string;
+      if (/cancel|reject|denied|dismiss/i.test(rawMessage)) {
+        message = "Transaction cancelled by user";
+      } else if (/op_underfunded|insufficient.*balance|tx_insufficient/i.test(rawMessage)) {
+        message = "Insufficient USDC balance in your wallet to pay for this scan";
+      } else if (/timeout|timed?\s*out/i.test(rawMessage)) {
+        message = "The request timed out. Please try again.";
+      } else if (/network|fetch|connect|ECONNREFUSED/i.test(rawMessage)) {
+        message = "Network error — could not reach the server. Check your connection.";
+      } else {
+        message = rawMessage.length > 150 ? rawMessage.slice(0, 150) + "…" : rawMessage;
+      }
+
       setError(message);
       toast.error("Scan failed", { description: message });
     } finally {
