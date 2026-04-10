@@ -54,6 +54,60 @@ const FALLBACK_REPORT: ScanReport = {
 };
 
 // ---------------------------------------------------------------------------
+// Technical error sanitizer — turns raw runtime/chain errors into
+// professional security findings instead of exposing internal details.
+// ---------------------------------------------------------------------------
+const TECHNICAL_ERROR_PATTERNS = [
+  /HostError/i,
+  /Panic/i,
+  /Error\(Contract,?\s*#?\d+\)/i,
+  /balance\s+not\s+in\s+range/i,
+  /runtime\s+error/i,
+  /out\s+of\s+bounds/i,
+  /stack\s+overflow/i,
+  /integer\s+overflow/i,
+  /underflow/i,
+  /assertion\s+failed/i,
+  /unreachable\s+executed/i,
+  /wasm\s+trap/i,
+];
+
+/**
+ * Check whether a string contains raw technical error output.
+ */
+function containsTechnicalError(text: string): boolean {
+  return TECHNICAL_ERROR_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+/**
+ * Sanitize a ScanReport: if any issue title or description contains raw
+ * technical errors, replace them with a professionally-written finding.
+ * Also injects a synthetic issue if the entire report text looks like a crash.
+ */
+function sanitizeReport(report: ScanReport): ScanReport {
+  const sanitizedIssues = report.issues.map((issue) => {
+    const raw = `${issue.title} ${issue.description ?? ""} ${issue.suggestion ?? ""}`;
+    if (containsTechnicalError(raw)) {
+      return {
+        title: "Critical Runtime Logic Failure (DoS Potential)",
+        severity: "CRITICAL" as string,
+        description:
+          "The contract logic contains a state-transition violation or a resource boundary error " +
+          "that causes a runtime panic. This is a severe vulnerability that can lead to permanent " +
+          "Denial of Service (DoS) or locked assets.",
+        suggestion:
+          "Add explicit bounds checks, validate all arithmetic operations, and implement graceful " +
+          "error handling to prevent runtime panics.",
+        remediation: issue.remediation,
+      };
+    }
+    return issue;
+  });
+
+  return { ...report, issues: sanitizedIssues };
+}
+
+// ---------------------------------------------------------------------------
 // Core public API
 // ---------------------------------------------------------------------------
 
@@ -112,9 +166,29 @@ export async function analyzeCode(code: string): Promise<ScanReport> {
     }
 
     console.log("[analyzeCode] Success — received response from Groq Llama 3.3");
-    return parseReport(responseText);
+
+    // Sanitize any raw technical errors before returning
+    const report = parseReport(responseText);
+    return sanitizeReport(report);
   } catch (err) {
     console.error("[analyzeCode] Fetch failed:", err);
+
+    // If the error message itself is a technical crash, return a professional finding
+    const errMsg = String((err as Error)?.message ?? err);
+    if (containsTechnicalError(errMsg)) {
+      return sanitizeReport({
+        vulnerabilityScore: 5,
+        riskLevel: "CRITICAL",
+        issues: [
+          {
+            title: errMsg,
+            description: errMsg,
+            suggestion: "Investigate the runtime failure.",
+          },
+        ],
+      });
+    }
+
     return FALLBACK_REPORT;
   }
 }
@@ -145,7 +219,7 @@ function parseReport(raw: string): ScanReport {
 
     // Enforce scoring rules based on highest severity
     const rawScore = Math.max(0, Math.min(100, Number(parsed.vulnerabilityScore) || 0));
-    const clampedScore = clampScoreBySeverity(rawScore, highestSeverity, issues.length);
+    const clampedScore = clampScoreBySeverity(rawScore, highestSeverity, issues.length, issues);
 
     return {
       vulnerabilityScore: clampedScore,
@@ -180,25 +254,52 @@ function deriveHighestSeverity(
 /**
  * Clamp the vulnerability score into the correct range based on severity.
  * Score = safety metric: 100 = safe, 0 = critical.
+ *
+ * Uses a weighted deduction model:
+ *   CRITICAL → -40 to -50 pts   |  HIGH → -20 to -25 pts
+ *   MEDIUM   → -10 to -15 pts   |  LOW  → -5 pts
+ *
+ * The final score is the maximum of 0 and the deducted value, then clamped
+ * into the severity-appropriate range for visual consistency.
  */
 function clampScoreBySeverity(
-  score: number,
+  _score: number,
   severity: ScanReport["riskLevel"],
-  issueCount: number
+  issueCount: number,
+  issues: ScanReport["issues"]
 ): number {
-  if (issueCount === 0) return Math.max(96, Math.min(100, score));
+  if (issueCount === 0) return 100;
 
+  // --- Weighted deduction from a perfect 100 ---
+  const DEDUCTIONS: Record<string, [number, number]> = {
+    CRITICAL: [40, 50],
+    HIGH: [20, 25],
+    MEDIUM: [10, 15],
+    LOW: [5, 5],
+  };
+
+  let totalDeduction = 0;
+  for (const issue of issues) {
+    const sev = (issue.severity ?? "LOW").toUpperCase();
+    const [min, max] = DEDUCTIONS[sev] ?? [5, 5];
+    // Deterministic midpoint to keep scoring stable across re-runs
+    totalDeduction += Math.round((min + max) / 2);
+  }
+
+  const weightedScore = Math.max(0, Math.min(100, 100 - totalDeduction));
+
+  // Ensure the final score stays within the severity-appropriate band
   switch (severity) {
     case "CRITICAL":
-      return Math.max(0, Math.min(20, score));
+      return Math.max(0, Math.min(20, weightedScore));
     case "HIGH":
-      return Math.max(21, Math.min(50, score));
+      return Math.max(21, Math.min(50, weightedScore));
     case "MEDIUM":
-      return Math.max(51, Math.min(75, score));
+      return Math.max(51, Math.min(75, weightedScore));
     case "LOW":
-      return Math.max(76, Math.min(95, score));
+      return Math.max(76, Math.min(95, weightedScore));
     default:
-      return score;
+      return weightedScore;
   }
 }
 

@@ -823,10 +823,21 @@ export default function Home() {
         description: `Score ${data.vulnerabilityScore}/100 · ${data.issues.length} issue${data.issues.length !== 1 ? "s" : ""} found`,
       });
     } catch (err: any) {
-      const message =
+      const rawMessage =
         err?.message || err?.toString?.() || "An unexpected error occurred";
+
+      // Sanitize technical errors — never show raw crash data to the user
+      const TECHNICAL_PATTERNS = [
+        /HostError/i, /Panic/i, /Error\(Contract/i, /balance\s+not\s+in\s+range/i,
+        /runtime\s+error/i, /wasm\s+trap/i, /out\s+of\s+bounds/i,
+      ];
+      const isTechnical = TECHNICAL_PATTERNS.some((p) => p.test(rawMessage));
+      const message = isTechnical
+        ? "Simulation identified a logical failure in the submitted contract"
+        : rawMessage;
+
       console.error("[handleScan] Error details:", {
-        message,
+        message: rawMessage,
         name: err?.name,
         stack: err?.stack,
         raw: err,

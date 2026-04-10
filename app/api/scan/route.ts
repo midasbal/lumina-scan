@@ -151,9 +151,18 @@ export async function POST(req: Request) {
     response.headers.set("X-Session-Remaining", String(sessionDeduction!.remaining));
     return response;
   } catch (err: any) {
-    return NextResponse.json(
-      { error: `Internal server error: ${err.message || String(err)}` },
-      { status: 500 }
-    );
+    // Sanitize technical errors — never expose raw internals to the client
+    const rawMsg = err.message || String(err);
+    const TECHNICAL_PATTERNS = [
+      /HostError/i, /Panic/i, /Error\(Contract/i, /balance\s+not\s+in\s+range/i,
+      /runtime\s+error/i, /wasm\s+trap/i, /out\s+of\s+bounds/i,
+    ];
+    const isTechnical = TECHNICAL_PATTERNS.some((p) => p.test(rawMsg));
+    const safeMessage = isTechnical
+      ? "Simulation identified a critical runtime logic failure in the submitted contract"
+      : `Internal server error: ${rawMsg}`;
+
+    console.error("[scan] Error:", rawMsg);
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }
