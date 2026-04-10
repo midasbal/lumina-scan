@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ShieldCheck,
   Sparkles,
@@ -210,7 +211,7 @@ export default function DocsPage() {
       {/* ----------------------------------------------------------------- */}
       <header className="sticky top-0 z-50 border-b border-zinc-800/60 bg-[#09090b]/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          <a
+          <Link
             href="/"
             className="group flex items-center gap-2.5 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
           >
@@ -221,7 +222,7 @@ export default function DocsPage() {
               className="h-8 w-auto opacity-80 transition-opacity group-hover:opacity-100"
               draggable={false}
             />
-          </a>
+          </Link>
           <div className="flex items-center gap-3">
             <span className="rounded-full border border-zinc-800/50 bg-zinc-900/60 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-600">
               Documentation v1.0
