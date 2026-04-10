@@ -759,6 +759,17 @@ export default function Home() {
   async function handleScan() {
     if (!code.trim()) return;
 
+    // Balance Guard — if a session is active, ensure sufficient allowance
+    const scanPrice = calculatePrice(code, isPriority);
+    if (isSessionActive && sessionToken) {
+      if (sessionAllowance < scanPrice) {
+        toast.error("Insufficient balance", {
+          description: `This scan costs ${formatPrice(scanPrice)} USDC but your session only has ${formatPrice(sessionAllowance)} USDC remaining. Please top up your session.`,
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     setReport(null);
@@ -773,7 +784,6 @@ export default function Home() {
       };
 
       // If session is active and has enough allowance, bypass MPP/Freighter
-      const scanPrice = calculatePrice(code, isPriority);
       const useSession = isSessionActive && sessionToken && sessionAllowance >= scanPrice;
 
       if (useSession) {
@@ -917,6 +927,13 @@ export default function Home() {
       setUnlockingIdx(null);
     }
   }
+
+  // =========================================================================
+  // Derived state — Balance Guard visual indicator
+  // =========================================================================
+  const estimatedScanCost = code.trim() ? calculatePrice(code, isPriority) : 0;
+  const hasInsufficientBalance =
+    isSessionActive && sessionToken && estimatedScanCost > 0 && sessionAllowance < estimatedScanCost;
 
   // =========================================================================
   // Render
@@ -1162,8 +1179,19 @@ export default function Home() {
                   <button
                     onClick={handleScan}
                     disabled={loading || !code.trim()}
+                    title={
+                      hasInsufficientBalance
+                        ? `Insufficient balance — need ${formatPrice(estimatedScanCost)} USDC, have ${formatPrice(sessionAllowance)} USDC`
+                        : isPriority
+                        ? "Run a VIP priority scan"
+                        : isSessionActive
+                        ? "Run a session-funded scan"
+                        : "Scan & Audit your contract"
+                    }
                     className={`group flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
-                      isPriority
+                      hasInsufficientBalance
+                        ? "border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/15"
+                        : isPriority
                         ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-fuchsia-500"
                         : isSessionActive
                         ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-violet-500"
@@ -1174,6 +1202,11 @@ export default function Home() {
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         {isPriority ? "VIP Analysing…" : "Analysing…"}
+                      </>
+                    ) : hasInsufficientBalance ? (
+                      <>
+                        <AlertTriangle className="h-4 w-4" />
+                        Low Balance
                       </>
                     ) : isPriority ? (
                       <>
