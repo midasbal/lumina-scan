@@ -1,0 +1,407 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lumina Scan — Autonomous Web3 Security Auditor",
+    "description": "AI-powered smart contract security scanner with Stellar-based machine payments. Supports dynamic pricing, priority queue, session-based pay-as-you-go, pay-for-patch, and immutable on-chain audit proofs.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Lumina Scan",
+      "url": "https://lumina-scan.vercel.app"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://lumina-scan.vercel.app",
+      "description": "Production (Stellar Testnet)"
+    }
+  ],
+  "x-openclaw": {
+    "agent_compatibility": ["langchain", "autogen", "crewai", "openai-functions", "anthropic-tools", "claude-code"],
+    "payment_protocol": "stellar-mpp",
+    "payment_standard": "x402",
+    "network": "stellar:testnet",
+    "currency": "USDC",
+    "usdc_issuer": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    "mcp_manifest": "/mcp.json",
+    "hackathon": "Stellar Hacks: Agentic AI",
+    "themes": ["autonomous-agents", "x402-mpp-protocol", "on-chain-paywalls", "usage-based-micro-payments", "frictionless-onboarding", "agent-to-agent-service-discovery"]
+  },
+  "paths": {
+    "/api/scan": {
+      "post": {
+        "operationId": "scanSmartContract",
+        "summary": "Analyze a smart contract for security vulnerabilities",
+        "description": "Accepts source code and returns a structured security report with vulnerability score, risk level, individual issues with severity ratings, remediation suggestions, and an immutable on-chain audit proof anchored to Stellar via SHA-256 Memo.hash. Payment is handled via Stellar MPP (402 challenge-response) or a pre-authorized session token.",
+        "x-tool-definition": {
+          "name": "scan_smart_contract",
+          "description": "Scan a smart contract for vulnerabilities. Returns structured JSON with vulnerability score (0-100), risk level, issues array, and Stellar audit proof hash. Requires USDC payment via MPP or session.",
+          "langchain_tool_name": "lumina_scan_audit",
+          "agent_instructions": "Call this tool with the full source code of a smart contract. The tool will return a security report. If you receive a 402 status, you must complete the Stellar MPP payment challenge before retrying."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["code"],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Full source code of the smart contract to audit."
+                  },
+                  "priority": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable VIP priority queue (adds 0.50 USDC surcharge, bypasses 4s queue delay)."
+                  }
+                }
+              },
+              "examples": {
+                "solidity": {
+                  "summary": "Simple Solidity contract",
+                  "value": {
+                    "code": "pragma solidity ^0.8.0;\ncontract Vault {\n  mapping(address => uint) public balances;\n  function deposit() public payable { balances[msg.sender] += msg.value; }\n  function withdraw(uint amount) public { (bool ok,) = msg.sender.call{value: amount}(\"\"); require(ok); balances[msg.sender] -= amount; }\n}",
+                    "priority": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Session-Token",
+            "in": "header",
+            "required": false,
+            "description": "Pre-authorized session token for pay-as-you-go mode. Bypasses per-request MPP wallet signatures. Obtain via POST /api/session.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful audit — structured security report",
+            "headers": {
+              "X-Session-Remaining": {
+                "description": "Remaining session allowance in USDC (only present when using session token).",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScanReport" }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required — MPP challenge. Respond with a Stellar USDC payment to continue.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "MPP Payment challenge with scheme, recipient, amount, and currency.",
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request body or missing code field." },
+          "500": { "description": "Server error." }
+        },
+        "x-pricing": {
+          "model": "dynamic",
+          "formula": "price = max(0.10, min(50.00, 0.10 + characters × 0.005))",
+          "base_fee_usdc": 0.10,
+          "per_character_usdc": 0.005,
+          "min_price_usdc": 0.10,
+          "max_price_usdc": 50.00,
+          "priority_surcharge_usdc": 0.50,
+          "examples": [
+            { "characters": 0,    "standard": "0.10", "priority": "0.60" },
+            { "characters": 100,  "standard": "0.60", "priority": "1.10" },
+            { "characters": 500,  "standard": "2.60", "priority": "3.10" },
+            { "characters": 1000, "standard": "5.10", "priority": "5.60" }
+          ]
+        }
+      }
+    },
+    "/api/unlock-patch": {
+      "post": {
+        "operationId": "unlockRemediationPatch",
+        "summary": "Unlock remediation code for a specific security issue",
+        "description": "Pay-for-Patch: unlock the premium remediation code for a CRITICAL or HIGH severity issue. Fixed price of 1 USDC per unlock.",
+        "x-tool-definition": {
+          "name": "unlock_patch",
+          "description": "Unlock the remediation code for a security issue by its zero-based index. Costs 1 USDC.",
+          "langchain_tool_name": "lumina_unlock_patch",
+          "agent_instructions": "After scanning, if there are CRITICAL or HIGH issues with locked remediation code, call this tool with the issue index to unlock the solution."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["issueIndex"],
+                "properties": {
+                  "issueIndex": {
+                    "type": "integer",
+                    "description": "Zero-based index of the issue to unlock."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Session-Token",
+            "in": "header",
+            "required": false,
+            "description": "Pre-authorized session token. If provided and has sufficient balance, deducts 1 USDC from session instead of MPP.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patch unlocked successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "unlocked": { "type": "boolean" },
+                    "issueIndex": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "402": { "description": "Payment required — MPP challenge." },
+          "400": { "description": "Invalid request." },
+          "500": { "description": "Server error." }
+        },
+        "x-pricing": {
+          "model": "fixed",
+          "amount_usdc": 1.00
+        }
+      }
+    },
+    "/api/session": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "Create a pay-as-you-go session with pre-authorized USDC deposit",
+        "description": "Deposit USDC upfront to get a session token. Subsequent scan and unlock requests use this token (via X-Session-Token header) for frictionless payments without per-request wallet signatures.",
+        "x-tool-definition": {
+          "name": "create_session",
+          "description": "Create a pre-paid session by depositing USDC. Returns a session token for subsequent API calls.",
+          "langchain_tool_name": "lumina_create_session",
+          "agent_instructions": "For batch scanning multiple contracts, create a session first with a sufficient deposit (e.g., 10 USDC for ~15-20 scans). Use the returned token in X-Session-Token header for all subsequent calls."
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["depositAmount", "walletAddress"],
+                "properties": {
+                  "depositAmount": {
+                    "type": "number",
+                    "minimum": 5,
+                    "maximum": 50,
+                    "description": "USDC amount to deposit. Tiers: 5, 10, 25, 50."
+                  },
+                  "walletAddress": {
+                    "type": "string",
+                    "description": "Stellar public key of the depositing wallet."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string", "description": "Session token — use in X-Session-Token header." },
+                    "remainingAllowance": { "type": "number" },
+                    "depositAmount": { "type": "number" },
+                    "createdAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "402": { "description": "MPP payment challenge for the deposit amount." }
+        }
+      },
+      "get": {
+        "operationId": "getSessionStatus",
+        "summary": "Check current session status and remaining allowance",
+        "parameters": [
+          {
+            "name": "X-Session-Token",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": { "type": "boolean" },
+                    "remainingAllowance": { "type": "number" },
+                    "depositAmount": { "type": "number" },
+                    "walletAddress": { "type": "string" },
+                    "createdAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Session not found or expired." }
+        }
+      },
+      "delete": {
+        "operationId": "endSession",
+        "summary": "End and destroy an active session",
+        "parameters": [
+          {
+            "name": "X-Session-Token",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session ended.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ended": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup-wallet": {
+      "post": {
+        "operationId": "setupWallet",
+        "summary": "Sponsored wallet onboarding — create account and USDC trustline for free",
+        "description": "3-case sponsored onboarding: (A) no account → full sponsored create + USDC trustline, (B) account exists but no trustline → sponsored trustline, (C) ready → no-op. All fees and reserves are sponsored by the Lumina server.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["publicKey"],
+                "properties": {
+                  "publicKey": {
+                    "type": "string",
+                    "description": "Stellar public key to onboard."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Wallet onboarded or already ready." },
+          "500": { "description": "Onboarding failed." }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ScanReport": {
+        "type": "object",
+        "properties": {
+          "vulnerabilityScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Safety score — 0 = extremely dangerous, 100 = perfectly safe."
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "description": "Categorical risk level based on highest severity issue."
+          },
+          "issues": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ScanIssue" }
+          },
+          "auditProofTxHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stellar testnet tx hash anchoring SHA-256 of this report on-chain. Viewable at https://stellar.expert/explorer/testnet/tx/{hash}"
+          }
+        }
+      },
+      "ScanIssue": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+          },
+          "suggestion": { "type": "string" },
+          "remediation": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remediation code — only available for CRITICAL/HIGH issues after unlocking via /api/unlock-patch (1 USDC)."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "mpp": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Stellar MPP payment authorization. On 402 response, read WWW-Authenticate header for payment instructions, complete the Stellar USDC transaction, then retry with the payment proof."
+      },
+      "session": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Session-Token",
+        "description": "Pre-authorized session token obtained via POST /api/session. Bypasses per-request MPP signatures."
+      }
+    }
+  },
+  "x-agent-quickstart": {
+    "steps": [
+      "1. (Optional) Create a session: POST /api/session with depositAmount and walletAddress",
+      "2. Call POST /api/scan with { code: '<contract source>' }",
+      "3. If 402 returned: complete MPP payment challenge, then retry",
+      "4. Parse the ScanReport from the 200 response",
+      "5. For CRITICAL/HIGH issues, call POST /api/unlock-patch with { issueIndex: N }",
+      "6. Verify on-chain proof at https://stellar.expert/explorer/testnet/tx/{auditProofTxHash}"
+    ],
+    "python_sdk_example": "/lumina-sdk-example.py",
+    "pricing_calculator": "price_usdc = max(0.10, min(50.00, 0.10 + len(code) * 0.005)) + (0.50 if priority else 0)"
+  }
+}

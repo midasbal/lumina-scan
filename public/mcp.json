@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "name": "lumina-scan",
+  "display_name": "Lumina Scan",
+  "description": "An autonomous Web3 security auditor with x402/MPP agentic payments on Stellar. Scans smart contracts for vulnerabilities using Llama 3.3 70B and anchors immutable audit proofs on-chain via SHA-256 Memo.hash.",
+  "provider": {
+    "name": "Lumina Scan",
+    "url": "https://lumina-scan.vercel.app"
+  },
+  "api": {
+    "type": "rest",
+    "base_url": "/api"
+  },
+  "auth": {
+    "type": "mpp",
+    "standard": "x402",
+    "description": "Machine-payable via Stellar x402/MPP protocol. Usage-based micro-payments in USDC — starting at $0.10 per scan."
+  },
+  "tools": [
+    {
+      "name": "analyze_smart_contract",
+      "description": "Analyze a smart contract for security vulnerabilities. Returns a structured report with a vulnerability score (0-100 safety metric), risk level, individual issues with severity ratings, remediation code suggestions, and an immutable on-chain audit proof anchored to the Stellar blockchain via Memo.hash.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contractCode": {
+            "type": "string",
+            "description": "The full source code of the smart contract to audit. Supports Solidity, Rust (Soroban), Move, and other Web3 languages."
+          },
+          "contractType": {
+            "type": "string",
+            "enum": ["solidity", "soroban-rust", "move", "ink", "other"],
+            "description": "The language or framework of the smart contract. Helps the auditor apply language-specific vulnerability patterns.",
+            "default": "solidity"
+          }
+        },
+        "required": ["contractCode"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "vulnerabilityScore": {
+            "type": "number",
+            "description": "Safety score from 0 (extremely dangerous) to 100 (perfectly safe)."
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "description": "Categorical risk classification based on the highest severity issue found."
+          },
+          "issues": {
+            "type": "array",
+            "description": "List of individual security issues with title, description, severity, suggestion, and remediation code.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                "suggestion": { "type": "string" },
+                "remediation": { "type": "string" }
+              }
+            }
+          },
+          "auditProofTxHash": {
+            "type": "string",
+            "description": "Stellar testnet transaction hash anchoring the SHA-256 of this report on-chain."
+          }
+        }
+      },
+      "endpoint": "/api/scan",
+      "method": "POST",
+      "request_body": {
+        "content_type": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "The smart contract source code to analyze."
+            }
+          },
+          "required": ["code"]
+        }
+      },
+      "payment": {
+        "pricing": "dynamic",
+        "base_fee": "0.1",
+        "per_character": "0.005",
+        "max_price": "50",
+        "currency": "USDC",
+        "network": "stellar:testnet",
+        "protocol": "mpp",
+        "formula": "price = max(0.1, min(50, 0.1 + chars × 0.005))"
+      }
+    },
+    {
+      "name": "unlock_remediation_patch",
+      "description": "Unlock the remediation code for a specific CRITICAL or HIGH severity issue. Pay-for-Patch: premium solution code is gated behind a 1 USDC micropayment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "issueIndex": {
+            "type": "number",
+            "description": "The zero-based index of the issue whose remediation patch should be unlocked."
+          }
+        },
+        "required": ["issueIndex"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "unlocked": {
+            "type": "boolean",
+            "description": "Whether the patch was successfully unlocked."
+          },
+          "issueIndex": {
+            "type": "number",
+            "description": "The index of the unlocked issue."
+          }
+        }
+      },
+      "endpoint": "/api/unlock-patch",
+      "method": "POST",
+      "request_body": {
+        "content_type": "application/json",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "issueIndex": {
+              "type": "number",
+              "description": "Zero-based index of the issue to unlock."
+            }
+          },
+          "required": ["issueIndex"]
+        }
+      },
+      "payment": {
+        "pricing": "fixed",
+        "amount": "1.0000000",
+        "currency": "USDC",
+        "network": "stellar:testnet",
+        "protocol": "mpp",
+        "description": "1 USDC per remediation patch unlock"
+      }
+    }
+  ],
+  "capabilities": {
+    "ai_model": "llama-3.3-70b-versatile",
+    "ai_provider": "groq",
+    "blockchain": "stellar-testnet",
+    "payment_protocol": "mpp",
+    "payment_standard": "x402",
+    "on_chain_proof": true,
+    "frictionless_onboarding": true,
+    "fee_sponsoring": true,
+    "dynamic_pricing": {
+      "formula": "max(0.10, min(50.00, 0.10 + chars × 0.005))",
+      "starting_price": "$0.10",
+      "priority_surcharge": "$0.50"
+    },
+    "session_payments": {
+      "description": "Pre-authorize a USDC deposit for frictionless pay-as-you-go scanning. Bypasses per-request wallet signatures.",
+      "endpoint": "/api/session",
+      "tiers": [5, 10, 25, 50],
+      "currency": "USDC",
+      "protocol": "mpp",
+      "session_header": "X-Session-Token"
+    },
+    "developer_tools": {
+      "openclaw_spec": "/openclaw.json",
+      "python_sdk": "/lumina-sdk-example.py",
+      "agent_frameworks": ["langchain", "crewai", "autogen", "openai-functions", "anthropic-tools", "claude-code"]
+    }
+  }
+}

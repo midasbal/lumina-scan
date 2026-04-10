@@ -1,6 +1,6 @@
 {
-  "name": "temp-app",
-  "version": "0.1.0",
+  "name": "lumina-scan",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,9 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@creit.tech/stellar-wallets-kit": "^2.1.0",
+    "@stellar/mpp": "^0.4.0",
+    "@stellar/stellar-sdk": "^14.6.1",
+    "lucide-react": "^1.8.0",
+    "mppx": "^0.4.12",
     "next": "16.2.3",
+    "next-themes": "^0.4.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -20,6 +27,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

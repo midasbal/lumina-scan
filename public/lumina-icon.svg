@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="f-main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="f-light" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+    <linearGradient id="f-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="f-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    <filter id="icon-glow">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="120" height="120" rx="24" fill="#09090b" />
+
+  <!-- Emerald faceted prism -->
+  <g transform="translate(60, 60)" filter="url(#icon-glow)">
+    <!-- Top facet (lightest) -->
+    <polygon points="0,-38 26,-12 0,-6" fill="url(#f-light)" opacity="0.95" />
+    <!-- Top-left facet -->
+    <polygon points="0,-38 -26,-12 0,-6" fill="url(#f-main)" opacity="0.9" />
+    <!-- Right facet -->
+    <polygon points="26,-12 0,-6 22,18 0,42" fill="url(#f-dark)" opacity="0.85" />
+    <!-- Left facet -->
+    <polygon points="-26,-12 0,-6 -22,18 0,42" fill="url(#f-main)" opacity="0.75" />
+    <!-- Bottom-right facet -->
+    <polygon points="0,-6 22,18 0,42" fill="url(#f-dark)" opacity="0.7" />
+    <!-- Bottom-left facet -->
+    <polygon points="0,-6 -22,18 0,42" fill="#047857" opacity="0.65" />
+    <!-- Center highlight -->
+    <line x1="0" y1="-38" x2="0" y2="42" stroke="#6ee7b7" stroke-width="0.5" opacity="0.4" />
+    <!-- Cross line -->
+    <line x1="-26" y1="-12" x2="26" y2="-12" stroke="#6ee7b7" stroke-width="0.3" opacity="0.3" />
+    <!-- Inner refraction -->
+    <line x1="0" y1="-6" x2="22" y2="18" stroke="#a7f3d0" stroke-width="0.3" opacity="0.25" />
+    <line x1="0" y1="-6" x2="-22" y2="18" stroke="#a7f3d0" stroke-width="0.3" opacity="0.25" />
+
+    <!-- Accent gem (violet) -->
+    <g transform="translate(32, -26)">
+      <polygon points="0,-7 5,-2 0,7 -5,-2" fill="url(#f-accent)" opacity="0.7" />
+    </g>
+
+    <!-- Sparkle dots -->
+    <circle cx="-8" cy="-28" r="1.2" fill="#fff" opacity="0.7" />
+    <circle cx="16" cy="-20" r="0.8" fill="#fff" opacity="0.5" />
+  </g>
+</svg>
