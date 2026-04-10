@@ -689,8 +689,19 @@ export default function Home() {
   // Feature 1 — Start a Pro session (one-time deposit for frictionless scans)
   // ---------------------------------------------------------------------------
   async function startSession(depositAmount: number = 5) {
-    if (!walletAddress || !mppFetchRef.current) {
-      setPaymentRequired(true);
+    // Guard 1: Wallet must be connected
+    if (!walletAddress) {
+      toast.error("Wallet not connected", {
+        description: "Please connect your Freighter wallet before upgrading to Pro.",
+      });
+      return;
+    }
+
+    // Guard 2: MPP payment handler must be initialised
+    if (!mppFetchRef.current) {
+      toast.error("Wallet not ready", {
+        description: "Your wallet is still initialising. Please wait a moment and try again.",
+      });
       return;
     }
 
@@ -706,14 +717,18 @@ export default function Home() {
       });
 
       if (res.status === 402) {
-        // MPP challenge — should be handled by mppFetch automatically
-        setPaymentRequired(true);
+        // MPP challenge — likely insufficient USDC in wallet
+        toast.error("Insufficient USDC in wallet", {
+          description: `You need ${depositAmount} USDC in your Stellar wallet to upgrade to Pro. Please top up and try again.`,
+        });
         return;
       }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        const msg = body?.error || `Session upgrade failed (${res.status})`;
         console.error("[startSession] Failed:", body);
+        toast.error("Pro upgrade failed", { description: msg });
         return;
       }
 
@@ -722,11 +737,18 @@ export default function Home() {
       setSessionAllowance(data.remainingAllowance);
       setIsSessionActive(true);
 
+      toast.success("Pro session activated", {
+        description: `${data.remainingAllowance} USDC allowance ready for frictionless scanning.`,
+      });
       console.log(
         `[startSession] ✅ Pro session active — ${data.remainingAllowance} USDC allowance`
       );
     } catch (err: any) {
-      console.error("[startSession] Error:", err?.message ?? err);
+      const msg = err?.message ?? String(err);
+      console.error("[startSession] Error:", msg);
+      toast.error("Pro upgrade failed", {
+        description: "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setSessionLoading(false);
     }
@@ -759,15 +781,23 @@ export default function Home() {
   async function handleScan() {
     if (!code.trim()) return;
 
-    // Balance Guard — if a session is active, ensure sufficient allowance
+    // Balance Guard — MUST be the first check before any API call or state change.
+    // If a session is active, verify the user can afford this scan immediately.
     const scanPrice = calculatePrice(code, isPriority);
-    if (isSessionActive && sessionToken) {
-      if (sessionAllowance < scanPrice) {
-        toast.error("Insufficient balance", {
-          description: `This scan costs ${formatPrice(scanPrice)} USDC but your session only has ${formatPrice(sessionAllowance)} USDC remaining. Please top up your session.`,
-        });
-        return;
-      }
+    if (isSessionActive && sessionToken && sessionAllowance < scanPrice) {
+      toast.error("Insufficient session balance", {
+        description: `This scan costs ${formatPrice(scanPrice)} USDC but your session only has ${formatPrice(sessionAllowance)} USDC remaining. Please top up your session.`,
+      });
+      return;
+    }
+
+    // Guard passed — wallet must be connected for non-session flows
+    if (!isSessionActive && !walletAddress && !mppFetchRef.current) {
+      toast.error("Wallet not connected", {
+        description: "Please connect your Freighter wallet to pay for scans.",
+      });
+      setPaymentRequired(true);
+      return;
     }
 
     setLoading(true);
@@ -932,8 +962,16 @@ export default function Home() {
   // Derived state — Balance Guard visual indicator
   // =========================================================================
   const estimatedScanCost = code.trim() ? calculatePrice(code, isPriority) : 0;
+  // Show amber "Low Balance" state when:
+  //   - A session is active, AND
+  //   - Either: the allowance is below the estimated cost for the current code, OR
+  //             the allowance is below the absolute minimum scan price (BASE_FEE_USDC)
   const hasInsufficientBalance =
-    isSessionActive && sessionToken && estimatedScanCost > 0 && sessionAllowance < estimatedScanCost;
+    isSessionActive &&
+    !!sessionToken &&
+    (estimatedScanCost > 0
+      ? sessionAllowance < estimatedScanCost
+      : sessionAllowance < BASE_FEE_USDC);
 
   // =========================================================================
   // Render
