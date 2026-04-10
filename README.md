@@ -14,7 +14,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![Llama 3.3](https://img.shields.io/badge/AI-Llama%203.3%2070B-orange)](https://groq.com)
 
-**[Live Demo](https://lumina-scan.vercel.app)** · **[Documentation](/docs)** · **[API Spec](/openclaw.json)** · **[Python SDK](/lumina-sdk-example.py)**
+**[Live Demo](https://lumina-scan.vercel.app)** · **[Documentation](https://lumina-scan.vercel.app/docs)** · **[API Spec](https://lumina-scan.vercel.app/openclaw.json)** · **[Python SDK](https://lumina-scan.vercel.app/lumina-sdk-example.py)**
 
 </div>
 
@@ -132,9 +132,9 @@ Skip the standard queue. Priority scans execute instantly for an extra $0.50 —
 ### 10. 🐍 OpenClaw / LangChain Compatibility (Interoperability Layer)
 Full **OpenAPI 3.1 spec** + ready-to-run **Python SDK** + **LangChain StructuredTool** definitions. Lumina Scan is a platform, not just a product.
 
-- **Spec:** `/openclaw.json` — Tool definitions with `x-tool-definition` for LangChain, CrewAI, AutoGen
-- **SDK:** `/lumina-sdk-example.py` — Scan, unlock, sessions, proof verification
-- **Integration:** `/scripts/openclaw-integration.py` — LangChain agent tool factory
+- **Spec:** [`/openclaw.json`](https://lumina-scan.vercel.app/openclaw.json) — Tool definitions with `x-tool-definition` for LangChain, CrewAI, AutoGen
+- **SDK:** [`/lumina-sdk-example.py`](https://lumina-scan.vercel.app/lumina-sdk-example.py) — Scan, unlock, sessions, proof verification
+- **Integration:** [`/scripts/openclaw-integration.py`](./scripts/openclaw-integration.py) — LangChain agent tool factory
 
 ---
 
@@ -168,9 +168,9 @@ Lumina Scan is designed to be discovered and consumed by autonomous AI agents:
 
 | Protocol | File | Purpose |
 |----------|------|---------|
-| **MCP** | `/mcp.json` | Model Context Protocol manifest for agent discovery |
-| **OpenClaw** | `/openclaw.json` | OpenAPI 3.1 spec with `x-tool-definition` for LangChain/CrewAI |
-| **Python SDK** | `/lumina-sdk-example.py` | Ready-to-run HTTP client with MPP handling |
+| **MCP** | [`/mcp.json`](https://lumina-scan.vercel.app/mcp.json) | Model Context Protocol manifest for agent discovery |
+| **OpenClaw** | [`/openclaw.json`](https://lumina-scan.vercel.app/openclaw.json) | OpenAPI 3.1 spec with `x-tool-definition` for LangChain/CrewAI |
+| **Python SDK** | [`/lumina-sdk-example.py`](https://lumina-scan.vercel.app/lumina-sdk-example.py) | Ready-to-run HTTP client with MPP handling |
 | **HTML Meta** | `<link rel="mcp-manifest">` | In-page discovery tag |
 | **CORS Config** | `/api/mcp/config` | Cross-origin configuration endpoint |
 
@@ -295,9 +295,6 @@ lumina-scan/
 ├── scripts/
 │   └── openclaw-integration.py   # LangChain integration reference
 ├── types/index.ts                # TypeScript interfaces
-└── docs/
-    ├── stellar-docs.md           # Stellar SDK reference
-    └── mpp-reference.md          # MPP protocol notes
 ```
 
 ---

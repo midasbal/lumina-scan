@@ -1,4 +1,4 @@
 - Respond to the user in Turkish, but ALWAYS write code and comments in English.
 - Never use "oil painting" or "illustration" styles in UI mockups; stick to realistic, clean, "Quiet Luxury" photography-inspired textures.
 - Focus on photorealistic 8k resolution standards for visual component planning.
-- When working with Stellar SDK, verify methods against the provided `stellar-docs.md` to avoid hallucinations.
+- When working with Stellar SDK, verify methods against the official [Stellar developer documentation](https://developers.stellar.org/docs) to avoid hallucinations.
