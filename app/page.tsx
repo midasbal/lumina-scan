@@ -67,6 +67,36 @@ const RISK_ICONS: Record<ScanReport["riskLevel"], typeof ShieldCheck> = {
 const TESTNET_PASSPHRASE = "Test SDF Network ; September 2015";
 
 // ---------------------------------------------------------------------------
+// Global error sanitizer — strips raw chain / runtime logs from user-facing
+// messages.  Any HostError, Contract #N, wasm trap, or balance-range errors
+// are replaced with a clean, non-technical explanation.
+// ---------------------------------------------------------------------------
+const TECHNICAL_LEAK_PATTERNS = [
+  /HostError/i,
+  /Error\(Contract,?\s*#?\d+\)/i,
+  /resulting\s+balance/i,
+  /wasm\s+trap/i,
+  /Panic/i,
+  /runtime\s+error/i,
+  /balance\s+not\s+in\s+range/i,
+  /out\s+of\s+bounds/i,
+  /stack\s+overflow/i,
+  /integer\s+overflow/i,
+  /assertion\s+failed/i,
+  /unreachable\s+executed/i,
+  /underflow/i,
+  /invoke_host_function/i,
+  /soroban/i,
+];
+
+function forceSanitize(msg: string): string {
+  if (TECHNICAL_LEAK_PATTERNS.some((p) => p.test(msg))) {
+    return "Transaction failed: Insufficient account balance or network limit reached.";
+  }
+  return msg;
+}
+
+// ---------------------------------------------------------------------------
 // Circular gauge component
 // ---------------------------------------------------------------------------
 function ScoreGauge({ score, riskLevel }: { score: number; riskLevel: ScanReport["riskLevel"] }) {
@@ -726,9 +756,9 @@ export default function Home() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        const msg = body?.error || `Session upgrade failed (${res.status})`;
+        const rawMsg = body?.error || `Session upgrade failed (${res.status})`;
         console.error("[startSession] Failed:", body);
-        toast.error("Pro upgrade failed", { description: msg });
+        toast.error("Pro upgrade failed", { description: forceSanitize(rawMsg) });
         return;
       }
 
@@ -767,7 +797,7 @@ export default function Home() {
         });
       } else {
         toast.error("Pro upgrade failed", {
-          description: msg.length > 120 ? msg.slice(0, 120) + "…" : msg,
+          description: "Please ensure your wallet has enough USDC and XLM for fees.",
         });
       }
     } finally {
@@ -868,7 +898,7 @@ export default function Home() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body?.error || `Request failed with status ${res.status}`);
+        setError(forceSanitize(body?.error || `Request failed with status ${res.status}`));
         return;
       }
 
@@ -905,7 +935,9 @@ export default function Home() {
       } else if (/network|fetch|connect|ECONNREFUSED/i.test(rawMessage)) {
         message = "Network error — could not reach the server. Check your connection.";
       } else {
-        message = rawMessage.length > 150 ? rawMessage.slice(0, 150) + "…" : rawMessage;
+        // Last resort: run through the global sanitizer to strip any technical leaks
+        const truncated = rawMessage.length > 150 ? rawMessage.slice(0, 150) + "…" : rawMessage;
+        message = forceSanitize(truncated);
       }
 
       setError(message);
@@ -978,7 +1010,9 @@ export default function Home() {
       toast.success("Patch unlocked", { description: "Remediation code revealed" });
     } catch (err: any) {
       console.error("[unlockPatch] Error:", err?.message ?? err);
-      toast.error("Patch unlock failed");
+      toast.error("Patch unlock failed", {
+        description: forceSanitize(err?.message ?? "An unexpected error occurred."),
+      });
     } finally {
       setUnlockingIdx(null);
     }
@@ -1320,7 +1354,7 @@ export default function Home() {
             {error && (
               <div className="mt-4 flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/5 px-5 py-3.5 text-sm text-red-300/90">
                 <ShieldAlert className="h-4 w-4 flex-shrink-0 text-red-400" />
-                <span>{error}</span>
+                <span>{forceSanitize(error)}</span>
               </div>
             )}
           </section>

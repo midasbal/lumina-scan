@@ -151,11 +151,45 @@ export async function POST(req: Request) {
     response.headers.set("X-Session-Remaining", String(sessionDeduction!.remaining));
     return response;
   } catch (err: any) {
-    // Only true system errors reach here (network failures, misconfiguration, etc.)
-    // Contract-level findings (HostError, Panic, etc.) are handled by the analyzer
-    // and returned as valid report issues — they never throw.
+    // If the error contains a contract-level technical message (HostError, Panic,
+    // wasm trap, etc.) it is a FINDING, not a server failure.  Return 200 with a
+    // synthetic CRITICAL report so the frontend displays it in the report card.
     const rawMsg = err.message || String(err);
-    console.error("[scan] System error:", rawMsg);
+    console.error("[scan] Caught error:", rawMsg);
+
+    const TECHNICAL_PATTERNS = [
+      /HostError/i,
+      /Error\(Contract,?\s*#?\d+\)/i,
+      /Panic/i,
+      /wasm\s+trap/i,
+      /resulting\s+balance/i,
+      /balance\s+not\s+in\s+range/i,
+      /runtime\s+error/i,
+      /invoke_host_function/i,
+    ];
+
+    if (TECHNICAL_PATTERNS.some((p) => p.test(rawMsg))) {
+      const syntheticReport = {
+        vulnerabilityScore: 5,
+        riskLevel: "CRITICAL",
+        issues: [
+          {
+            title: "Contract Execution Panic Detected",
+            severity: "CRITICAL",
+            description:
+              "The contract logic triggers a runtime panic or host error during execution. " +
+              "This indicates a critical state-transition violation that can permanently lock " +
+              "assets or cause Denial of Service.",
+            suggestion:
+              "Add explicit bounds checks, validate all arithmetic operations, and implement " +
+              "graceful error handling to prevent runtime panics.",
+          },
+        ],
+      };
+      return NextResponse.json(syntheticReport, { status: 200 });
+    }
+
+    // True system errors only (network failures, misconfiguration, etc.)
     return NextResponse.json(
       { error: "An internal error occurred while processing your scan. Please try again." },
       { status: 500 }

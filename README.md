@@ -188,7 +188,7 @@ Lumina Scan is designed to be discovered and consumed by autonomous AI agents:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/lumina-scan.git
+git clone https://github.com/midasbal/lumina-scan.git
 cd lumina-scan
 
 # Install dependencies
