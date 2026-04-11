@@ -1217,11 +1217,11 @@ export default function Home() {
                 rows={14}
                 spellCheck={false}
                 placeholder={`// Paste your smart contract code here...\n\npragma solidity ^0.8.0;\n\ncontract Vault {\n    mapping(address => uint256) public balances;\n    ...\n}`}
-                className="w-full resize-none bg-transparent px-5 py-4 font-mono text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-700 focus:outline-none"
+                className="w-full resize-none bg-transparent px-5 py-4 font-mono text-sm leading-relaxed text-zinc-800 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-700 focus:outline-none"
               />
 
               {/* Footer with action + dynamic pricing taximeter */}
-              <div className="flex flex-col gap-3 border-t border-zinc-800/50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-t border-zinc-200 dark:border-zinc-800/50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   <span className="text-xs text-zinc-600">
                     {code.length > 0 ? `${code.split("\n").length} lines` : "Ready"}

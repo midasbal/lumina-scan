@@ -44,17 +44,16 @@ export default function RootLayout({
         {/* MCP manifest for AI agent discovery */}
         <link rel="mcp-manifest" href="/mcp.json" type="application/json" />
       </head>
-      <body className="min-h-full flex flex-col bg-[#09090b] text-zinc-100">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
           <Toaster
             position="bottom-right"
             toastOptions={{
               className:
-                "!bg-zinc-900 !border-zinc-800 !text-zinc-100 !shadow-xl !shadow-black/30",
-              descriptionClassName: "!text-zinc-400",
+                "!bg-white dark:!bg-zinc-900 !border-zinc-200 dark:!border-zinc-800 !text-zinc-900 dark:!text-zinc-100 !shadow-xl !shadow-zinc-200/30 dark:!shadow-black/30",
+              descriptionClassName: "!text-zinc-500 dark:!text-zinc-400",
             }}
-            theme="dark"
           />
         </ThemeProvider>
       </body>
