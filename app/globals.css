@@ -1,18 +1,9 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* CSS custom properties — Light mode (default)                       */
+/* CSS custom properties — Dark-only (Cyber-Noir)                     */
 /* ------------------------------------------------------------------ */
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
-  color-scheme: light;
-}
-
-/* ------------------------------------------------------------------ */
-/* Dark mode — triggered by next-themes adding .dark to <html>        */
-/* ------------------------------------------------------------------ */
-.dark {
   --background: #09090b;
   --foreground: #ededed;
   color-scheme: dark;
@@ -111,21 +102,4 @@ body {
 /* Smooth number counter transition */
 .tabular-transition {
   transition: opacity 0.15s ease;
-}
-
-/* ------------------------------------------------------------------ */
-/* Light mode overrides for Quiet Luxury aesthetic                    */
-/* ------------------------------------------------------------------ */
-
-/* Light mode body & card backgrounds */
-html:not(.dark) body {
-  background: #fafafa !important;
-  color: #18181b !important;
-}
-
-/* Sonner toast light mode */
-html:not(.dark) [data-sonner-toaster] [data-sonner-toast] {
-  --normal-bg: #ffffff !important;
-  --normal-border: #e4e4e7 !important;
-  --normal-text: #18181b !important;
 }

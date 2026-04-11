@@ -140,7 +140,7 @@ Full **OpenAPI 3.1 spec** + ready-to-run **Python SDK** + **LangChain Structured
 
 ## ✨ Premium UX/UI Engineering
 
-Six enterprise-grade interface features that elevate Lumina Scan from functional prototype to a product with premium, "Quiet Luxury" feel.
+Five enterprise-grade interface features that elevate Lumina Scan from functional prototype to a product with premium, "Quiet Luxury" feel.
 
 ### 🦴 Skeleton Loading Shimmers
 Custom `@keyframes shimmerSweep` with an **emerald/violet linear-gradient sweep**. Replaces generic spinners with a full skeleton matching the report layout — gauge, risk cards, issue cards — so the UI feels alive during AI analysis.
@@ -150,9 +150,6 @@ A custom `useAnimatedNumber` hook using `requestAnimationFrame` with **ease-out 
 
 ### 📜 Audit History Timeline
 **Session-persistent** audit history stored in `sessionStorage` (max 10 entries). Each entry stores full report, code, and on-chain proof. Users can **restore**, **delete**, **export JSON**, or **clear all** — providing platform-level data portability.
-
-### 🌗 Dark / Light Theme
-Seamless theme switching powered by **next-themes** with class-based toggling. Light mode uses clean whites, `zinc-100` surfaces, and sharp emerald contrasts — equally stunning as the Cyber-Noir dark mode.
 
 ### 📄 Professional CSV & JSON Exports
 One-click **CSV export** generates structured vulnerability data (Severity, Title, Description) with UTF-8 BOM for Excel compatibility. Combined with JSON history export for complete data portability — built for developers who parse, not just read.
@@ -258,7 +255,6 @@ print(f"Proof: stellar.expert/tx/{report['auditProofTxHash']}")
 | **Blockchain** | @stellar/stellar-sdk v14.6.1 | On-chain proofs, sponsoring |
 | **Payments** | mppx v0.4.12, @stellar/mpp v0.4.0 | x402 / MPP protocol |
 | **Wallet** | @creit.tech/stellar-wallets-kit v2.1.0, Freighter | Client-side signing |
-| **Theming** | next-themes | Dark/Light mode switching |
 | **Notifications** | Sonner | Toast notification system |
 | **Export** | Native CSV + JSON | Structured report & history export |
 | **Design** | Quiet Luxury / Cyber-Noir | Premium aesthetic |
@@ -319,7 +315,7 @@ lumina-scan/
 1. **Real utility** — Security audits are a $2B+ market need, not a toy demo
 2. **Full x402/MPP stack** — Not just a 402 status code; we implement sessions, sponsoring, and dynamic pricing
 3. **10 production features** — Each feature is implemented, tested, and working end-to-end
-4. **6 premium UX features** — Skeleton shimmers, animated balance, audit history, dark/light theme, CSV/JSON export, toast notifications
+4. **5 premium UX features** — Skeleton shimmers, animated balance, audit history, CSV/JSON export, toast notifications
 5. **On-chain proof** — Every audit is cryptographically anchored to Stellar — verifiable forever
 6. **Platform, not product** — OpenClaw + MCP + Python SDK make us an interoperability hub
 

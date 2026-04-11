@@ -30,11 +30,8 @@ import {
   Trash2,
   X,
   Download,
-  Sun,
-  Moon,
   FileDown,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import type { ScanReport } from "@/types";
 import { calculatePrice, formatPrice, BASE_FEE_USDC, PER_CHAR_USDC, PRIORITY_SURCHARGE } from "@/lib/pricing";
@@ -429,12 +426,6 @@ export default function Home() {
   useEffect(() => {
     setAuditHistory(loadHistory());
   }, []);
-
-  // Theme toggle
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isDark = !mounted || theme === "dark";
 
   // CSV Export — structured vulnerability data (fix column gated by paywall)
   function exportCsv() {
@@ -1037,11 +1028,11 @@ export default function Home() {
   // Render
   // =========================================================================
   return (
-    <div className="flex flex-col min-h-screen font-sans selection:bg-zinc-700 dark:selection:bg-zinc-700 bg-[#fafafa] dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100">
+    <div className="flex flex-col min-h-screen font-sans selection:bg-zinc-700 bg-[#09090b] text-zinc-100">
       {/* --------------------------------------------------------------- */}
       {/* Header                                                          */}
       {/* --------------------------------------------------------------- */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800/60 bg-white/80 dark:bg-transparent backdrop-blur">
+      <header className="border-b border-zinc-800/60 bg-transparent backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             {/* Icon-only on mobile, full logo on sm+ */}
@@ -1060,7 +1051,7 @@ export default function Home() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <span className="hidden text-xs tracking-widest uppercase text-zinc-400 dark:text-zinc-600 lg:block">
+            <span className="hidden text-xs tracking-widest uppercase text-zinc-600 lg:block">
               Autonomous Web3 Security Auditor
             </span>
 
@@ -1069,22 +1060,11 @@ export default function Home() {
               href="/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 text-[11px] font-medium tracking-wider text-zinc-500 transition-all hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 hover:text-zinc-700 dark:hover:text-zinc-300 sm:flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-1.5 text-[11px] font-medium tracking-wider text-zinc-500 transition-all hover:border-zinc-700 hover:bg-zinc-800/40 hover:text-zinc-300 sm:flex"
             >
               <BookOpen className="h-3.5 w-3.5" />
               Docs
             </a>
-
-            {/* Theme toggle */}
-            {mounted && (
-              <button
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-                className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-1.5 text-zinc-500 transition-all hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 hover:text-zinc-700 dark:hover:text-zinc-300"
-                title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-              </button>
-            )}
 
             {/* Wallet button + onboarding badge */}
             {walletAddress ? (
@@ -1186,10 +1166,10 @@ export default function Home() {
               <Sparkles className="h-3.5 w-3.5" />
               Powered by AI &amp; Stellar Network
             </div>
-            <h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl md:text-5xl">
+            <h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-zinc-50 sm:text-4xl md:text-5xl">
               Smart Contract
               <br />
-              <span className="text-zinc-400 dark:text-zinc-500">Security Audit</span>
+              <span className="text-zinc-500">Security Audit</span>
             </h1>
             <p className="max-w-md text-sm leading-relaxed text-zinc-500">
               Paste your Solidity, Rust, or Soroban contract below. Our autonomous
@@ -1201,9 +1181,9 @@ export default function Home() {
         {/* ----- Input area ----- */}
         {!report && (
           <section className="mx-auto w-full max-w-3xl">
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/70 bg-white dark:bg-zinc-900/40 shadow-2xl shadow-zinc-200/50 dark:shadow-black/20 backdrop-blur">
+            <div className="rounded-xl border border-zinc-800/70 bg-zinc-900/40 shadow-2xl shadow-black/20 backdrop-blur">
               {/* Editor header */}
-              <div className="flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800/50 px-5 py-3">
+              <div className="flex items-center gap-2 border-b border-zinc-800/50 px-5 py-3">
                 <FileCode2 className="h-4 w-4 text-zinc-500" />
                 <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
                   Contract Source
@@ -1217,11 +1197,11 @@ export default function Home() {
                 rows={14}
                 spellCheck={false}
                 placeholder={`// Paste your smart contract code here...\n\npragma solidity ^0.8.0;\n\ncontract Vault {\n    mapping(address => uint256) public balances;\n    ...\n}`}
-                className="w-full resize-none bg-transparent px-5 py-4 font-mono text-sm leading-relaxed text-zinc-800 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-700 focus:outline-none"
+                className="w-full resize-none bg-transparent px-5 py-4 font-mono text-sm leading-relaxed text-zinc-300 placeholder:text-zinc-700 focus:outline-none"
               />
 
               {/* Footer with action + dynamic pricing taximeter */}
-              <div className="flex flex-col gap-3 border-t border-zinc-200 dark:border-zinc-800/50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 border-t border-zinc-800/50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   <span className="text-xs text-zinc-600">
                     {code.length > 0 ? `${code.split("\n").length} lines` : "Ready"}
@@ -1372,7 +1352,7 @@ export default function Home() {
           <section className="mx-auto w-full max-w-4xl">
             {/* Report header */}
             <div className="animate-fade-up mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl">
+              <h2 className="text-xl font-bold tracking-tight text-zinc-50 sm:text-2xl">
                 Audit Report
               </h2>
               <div className="flex items-center gap-2">
@@ -1380,7 +1360,7 @@ export default function Home() {
                 <button
                   onClick={exportCsv}
                   disabled={!report}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 px-3 py-2 text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400 transition-all hover:border-violet-300 dark:hover:border-violet-500/30 hover:bg-violet-50 dark:hover:bg-violet-500/5 hover:text-violet-600 dark:hover:text-violet-300 disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs font-medium tracking-wide text-zinc-400 transition-all hover:border-violet-500/30 hover:bg-violet-500/5 hover:text-violet-300 disabled:opacity-40"
                 >
                   <FileDown className="h-3.5 w-3.5" />
                   Export CSV
@@ -1391,7 +1371,7 @@ export default function Home() {
                     setReport(null);
                     setCode("");
                   }}
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 px-4 py-2 text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400 transition-all hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 hover:text-zinc-700 dark:hover:text-zinc-200"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-2 text-xs font-medium tracking-wide text-zinc-400 transition-all hover:border-zinc-600 hover:bg-zinc-800/80 hover:text-zinc-200"
                 >
                   New Scan
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -1964,7 +1944,7 @@ export default function Home() {
       {/* --------------------------------------------------------------- */}
       {/* Footer                                                          */}
       {/* --------------------------------------------------------------- */}
-      <footer className="border-t border-zinc-200 dark:border-zinc-800/40">
+      <footer className="border-t border-zinc-800/40">
         <div className="mx-auto flex h-auto max-w-6xl flex-col items-center gap-3 px-4 py-4 sm:h-14 sm:flex-row sm:justify-between sm:gap-0 sm:px-6 sm:py-0">
           <div className="flex items-center gap-2.5">
             <img
@@ -1978,7 +1958,7 @@ export default function Home() {
             </span>
 
             {/* Social links */}
-            <span className="mx-1 hidden h-3 w-px bg-zinc-300 dark:bg-zinc-800 sm:inline-block" />
+            <span className="mx-1 hidden h-3 w-px bg-zinc-800 sm:inline-block" />
             <a
               href="https://x.com/wjmdiary"
               target="_blank"

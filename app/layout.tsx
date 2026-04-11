@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -37,25 +36,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         {/* MCP manifest for AI agent discovery */}
         <link rel="mcp-manifest" href="/mcp.json" type="application/json" />
       </head>
-      <body className="min-h-full flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+      <body className="min-h-full flex flex-col bg-[#09090b] text-zinc-100">
           {children}
           <Toaster
             position="bottom-right"
             toastOptions={{
               className:
-                "!bg-white dark:!bg-zinc-900 !border-zinc-200 dark:!border-zinc-800 !text-zinc-900 dark:!text-zinc-100 !shadow-xl !shadow-zinc-200/30 dark:!shadow-black/30",
-              descriptionClassName: "!text-zinc-500 dark:!text-zinc-400",
+                "!bg-zinc-900 !border-zinc-800 !text-zinc-100 !shadow-xl !shadow-black/30",
+              descriptionClassName: "!text-zinc-400",
             }}
+            theme="dark"
           />
-        </ThemeProvider>
       </body>
     </html>
   );
