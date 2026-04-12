@@ -14,7 +14,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![Llama 3.3](https://img.shields.io/badge/AI-Llama%203.3%2070B-orange)](https://groq.com)
 
-**[🎥 Watch Demo Video](https://youtu.be/(https://youtu.be/mz1d4ZYjmdo))**
+**[🎥 Watch Demo Video](https://youtu.be/mz1d4ZYjmdo))**
 
 **[Live Demo](https://lumina-scan.vercel.app)** · **[Documentation](https://lumina-scan.vercel.app/docs)** · **[API Spec](https://lumina-scan.vercel.app/openclaw.json)** · **[Python SDK](https://lumina-scan.vercel.app/lumina-sdk-example.py)**
 
