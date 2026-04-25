@@ -4,6 +4,8 @@
 
 <br />
 
+# shutting this down. built it for a hackathon, no real future for it. maybe later
+
 ### Autonomous Web3 Security Auditor — Powered by Stellar Agentic Payments
 
 *The first AI security scanner that charges per-request via the x402 / MPP protocol on Stellar.*
